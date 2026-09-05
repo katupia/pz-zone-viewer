@@ -50,7 +50,9 @@ sudo pacman -S tk                  # Arch
    `libraryfolders.vdf`), the game install and your `Zomboid` folder by itself.
    Fix any of them with *Browse…* if the guess is wrong, then *Scan for zones*.
 2. **Source** — vanilla maps first, then every mod in `Zomboid/mods` and in the
-   Steam Workshop folder.
+   Steam Workshop folder, each with how many zones it defines. Most mods define
+   none, so they are hidden by default; tick **Show sources with no zones** to
+   list them all.
 3. **Zone name** — the zone names that source defines, with how many zones each
    one has. Select several at once with Ctrl-click; each gets its own colour.
 4. **Build links** — one button per batch. *Open all* opens them in sequence,
@@ -73,6 +75,11 @@ the zone mods people actually ship:
 Commented-out lines are skipped, and small arithmetic in the coordinates
 (`x = 5553+5`) is evaluated. By default only vehicle-placing types
 (`ParkingStall`, `Vehicle`) are listed; untick the box to see every zone type.
+
+The base game and mods are read the same way, from the files on disk — nothing
+is bundled with the app. A vanilla map lists its own stalls (about 9 700 for
+Muldraugh), and a mod lists whatever it declares, including any local edits you
+have made.
 
 Only `.lua` files that plausibly hold zones are opened — `objects.lua`, anything
 under a `mapszones` or `maps` folder, and files with `zone` in the name — so

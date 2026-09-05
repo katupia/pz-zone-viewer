@@ -31,7 +31,7 @@ class Source(object):
         self.label = label
         self.path = path
         self.kind = kind          # "map" or "mod"
-        self.zones = None         # lazily filled
+        self.zones = None         # filled during the scan, then cached
 
     def load(self):
         if self.zones is None:
@@ -40,6 +40,12 @@ class Source(object):
             else:
                 self.zones = parsers.scan_tree(self.path)
         return self.zones
+
+    def count(self, vehicle_only):
+        zones = self.zones or []
+        if vehicle_only:
+            zones = [z for z in zones if z.type in parsers.VEHICLE_TYPES]
+        return len(zones)
 
 
 class App(ttk.Frame):
@@ -51,6 +57,7 @@ class App(ttk.Frame):
 
         self.cfg = config.load()
         self.sources = []
+        self.visible = []
         self.link_buttons = []
         self.queue = queue.Queue()
 
@@ -86,7 +93,12 @@ class App(ttk.Frame):
                      state="readonly").pack(side="left")
         self.only_vehicle = tk.BooleanVar(value=self.cfg.get("only_vehicle", True))
         ttk.Checkbutton(bar, text="Parking / vehicle zones only",
-                        variable=self.only_vehicle).pack(side="left", padx=16)
+                        variable=self.only_vehicle,
+                        command=self._refilter).pack(side="left", padx=16)
+        self.show_empty = tk.BooleanVar(value=self.cfg.get("show_empty", False))
+        ttk.Checkbutton(bar, text="Show sources with no zones",
+                        variable=self.show_empty,
+                        command=self._refilter).pack(side="left")
 
     def _build_panes(self):
         self.rowconfigure(1, weight=1)
@@ -183,6 +195,7 @@ class App(ttk.Frame):
         self.cfg.update({k: v.get() for k, v in self.vars.items()})
         self.cfg["build"] = self.build.get()
         self.cfg["only_vehicle"] = bool(self.only_vehicle.get())
+        self.cfg["show_empty"] = bool(self.show_empty.get())
         config.save(self.cfg)
 
     def scan(self):
@@ -204,9 +217,15 @@ class App(ttk.Frame):
                 for name, path in sources.game_map_dirs(game):
                     found.append(Source("Vanilla map: %s" % name, path, "map"))
             mods = sources.list_mod_dirs(zomboid, workshop)
-            for i, (label, path) in enumerate(mods):
-                self.queue.put(("status", "Scanning mods %d/%d: %s" % (i + 1, len(mods), label)))
+            for label, path in mods:
                 found.append(Source(label, path, "mod"))
+            # read every source now, so we know which ones define nothing
+            for i, src in enumerate(found):
+                self.queue.put(("status", "Reading %d/%d: %s" % (i + 1, len(found), src.label)))
+                try:
+                    src.load()
+                except Exception:
+                    src.zones = []
             self.queue.put(("sources", found))
         except Exception as exc:                      # keep the UI alive
             self.queue.put(("error", str(exc)))
@@ -229,16 +248,46 @@ class App(ttk.Frame):
 
     def _fill_sources(self, found):
         self.sources = found
+        self._refilter()
+
+    def _refilter(self):
+        """Redraw the source list for the current filter checkboxes."""
+        if not self.sources:
+            return
+        keep_empty = bool(self.show_empty.get())
+        vehicle_only = bool(self.only_vehicle.get())
+        previous = None
+        if getattr(self, "visible", None):
+            sel = self.src_list.curselection()
+            if sel:
+                previous = self.visible[sel[0]]
+
+        self.visible = [s for s in self.sources
+                        if keep_empty or s.count(vehicle_only) > 0]
         self.src_list.delete(0, "end")
-        for s in found:
-            self.src_list.insert("end", s.label)
-        self.status.set("%d sources. Pick one to list its zones." % len(found))
+        for s in self.visible:
+            n = s.count(vehicle_only)
+            self.src_list.insert("end", "%s  (%d)" % (s.label, n) if n else s.label)
+        if previous in self.visible:
+            i = self.visible.index(previous)
+            self.src_list.selection_set(i)
+            self.src_list.see(i)
+        hidden = len(self.sources) - len(self.visible)
+        with_zones = sum(1 for s in self.sources if s.count(vehicle_only) > 0)
+        if hidden:
+            msg = ("%d source(s) with zones, %d empty one(s) hidden."
+                   % (with_zones, hidden))
+        else:
+            msg = ("%d source(s), %d with zones."
+                   % (len(self.visible), with_zones))
+        self.status.set(msg + " Pick one to list its zones.")
+        self._save_cfg()
 
     def on_source(self):
         sel = self.src_list.curselection()
         if not sel:
             return
-        src = self.sources[sel[0]]
+        src = self.visible[sel[0]]
         self.zone_list.delete(0, "end")
         self._clear_links()
         self.status.set("Reading %s..." % src.label)
@@ -283,7 +332,7 @@ class App(ttk.Frame):
         self.link_buttons = []
         self.urls = []
 
-    def build_links(self):
+    def build_links(self, confirm=True):
         sel = self.zone_list.curselection()
         if not sel:
             messagebox.showinfo("Nothing selected", "Pick at least one zone name.")
@@ -305,7 +354,7 @@ class App(ttk.Frame):
             return
         pois.sort(key=lambda p: (p["y"], p["x"]))
         batches = share.split(pois)
-        if len(batches) > 40 and not messagebox.askokcancel(
+        if confirm and len(batches) > 40 and not messagebox.askokcancel(
                 "That is a lot of links",
                 "%d zones would need %d links of up to %d markers.\n\n"
                 "Vanilla car parks hold thousands of stalls; you may want a "

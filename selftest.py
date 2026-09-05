@@ -54,13 +54,22 @@ def main():
         pump(root, 0.1)
         if app.sources:
             break
-    print("[ok] scan found %d sources" % len(app.sources))
+    print("[ok] scan read %d sources, %d shown (empty ones hidden)"
+          % (len(app.sources), len(app.visible)))
     if not app.sources:
         ok = False
+    assert not app.show_empty.get(), "the empty-source box must start unticked"
+    hidden = len(app.sources) - len(app.visible)
+    app.show_empty.set(True); app._refilter(); pump(root, 0.2)
+    assert len(app.visible) == len(app.sources), (len(app.visible), len(app.sources))
+    app.show_empty.set(False); app._refilter(); pump(root, 0.2)
+    assert len(app.visible) == len(app.sources) - hidden
+    print("[ok] 'show sources with no zones' toggles %d <-> %d entries"
+          % (len(app.sources) - hidden, len(app.sources)))
 
     # pick the first source that actually defines something
     picked = None
-    for i, s in enumerate(app.sources):
+    for i, s in enumerate(app.visible):
         app.src_list.selection_clear(0, "end")
         app.src_list.selection_set(i)
         app.on_source()
@@ -73,9 +82,12 @@ def main():
             break
     if picked:
         print("[ok] %s -> %d zone names" % (picked.label, len(app.groups)))
+        # pick the smallest group, and never pop the "lots of links" dialog:
+        # a test must not put a modal box on the user's desktop
+        smallest = min(range(len(app.groups)), key=lambda i: len(app.groups[i][1]))
         app.zone_list.selection_clear(0, "end")
-        app.zone_list.selection_set(0)
-        app.build_links()
+        app.zone_list.selection_set(smallest)
+        app.build_links(confirm=False)
         pump(root, 0.3)
         print("[ok] built %d link(s); first = %s..." % (len(app.urls), app.urls[0][:60]))
         assert app.urls and app.urls[0].startswith("https://pzmap.org/?")
