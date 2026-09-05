@@ -1,3 +1,9 @@
 # Normalise line endings: LF in the repository, native in the working copy.
 * text=auto eol=lf
+
+# ...except Windows batch files, which want CRLF to be safe with cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.sh text eol=lf
 *.png binary
