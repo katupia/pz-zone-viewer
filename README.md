@@ -102,8 +102,8 @@ checked against the site's decoder, byte for byte.
 
 ## Credits
 
-pzmap.org is by **Cirno** — this app only builds links for it, and does not
-touch its servers beyond the page you open yourself.
+pzmap.org is by **Cirno** and the property of hosting provided by The Indie Stone — this app only builds links for it, and does not
+touch its servers beyond the page you open yourself. (Thanx to BlindCoder, Sigkill, Calvy)
 
 Written with **Claude Opus 5** (Anthropic).
 
