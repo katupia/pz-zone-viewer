@@ -29,11 +29,8 @@ Python 3.8 or newer, with Tkinter. No third-party packages.
 python main.py
 ```
 
-or
-
-```bash
-python -m pzzoneviewer
-```
+or `python -m pzzoneviewer`, or double-click **run.bat** on Windows /
+`./run.sh` on Linux and macOS.
 
 Tkinter ships with the python.org installers on Windows and macOS. On Linux you
 may need the system package:
@@ -84,6 +81,16 @@ have made.
 Only `.lua` files that plausibly hold zones are opened — `objects.lua`, anything
 under a `mapszones` or `maps` folder, and files with `zone` in the name — so
 scanning a large mod list stays quick.
+
+## Building a release
+
+```bash
+python make_release.py     # -> dist/pz-zone-viewer-<version>.zip + .sha256
+python verify_release.py   # extracts it and checks it compiles and runs
+```
+
+The archive holds only what is needed to run: the package, the entry point,
+the two launchers, the README and the licence.
 
 ## Layout
 
