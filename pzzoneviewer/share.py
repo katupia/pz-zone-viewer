@@ -22,8 +22,8 @@ HDR_FLAG_NAME = 1
 F_DESC, F_COLOR, F_ICON, F_RECTS = 1, 2, 4, 8
 F_LAYER, F_CATEGORY, F_COLOR_RGB, F_DELTA = 16, 32, 64, 128
 
-#: pzmap caps a browser at 50 stored markers, so payloads are split below this.
-MAX_MARKERS_PER_LINK = 48
+#: pzmap caps is removed. windows cmd size is now limiting.
+MAX_MARKERS_PER_LINK = 1000
 
 COLOR_PRESETS = [
     "#E040FB", "#FF1744", "#FF9100", "#FFEA00",

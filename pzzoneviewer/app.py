@@ -139,10 +139,9 @@ class App(ttk.Frame):
         ttk.Button(top, text="Open all", command=self.open_all).pack(side="left", padx=6)
         ttk.Button(top, text="Copy all URLs", command=self.copy_all).pack(side="left")
         self.hint = ttk.Label(right, wraplength=380, foreground="#555",
-                              text=("pzmap keeps at most 50 markers per browser, so a "
+                              text=("pzmap starts running slow on my end with 1000 markers per browser, so a "
                                     "selection is split into several links. Open one, then "
-                                    "choose “Overwrite and add markers” in the "
-                                    "import dialog."))
+                                    "choose “Overwrite and add markers” in the import dialog."))
         self.hint.grid(row=1, column=0, sticky="ew", pady=(8, 6))
 
         wrap = ttk.Frame(right)
