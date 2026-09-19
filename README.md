@@ -13,9 +13,8 @@ per zone.
 
 ## Why several buttons?
 
-pzmap.org stores at most **50 personal markers per browser**, so a large
-selection is split into batches of 38–48 and you get one button per batch. Open
-one, choose **“Overwrite and add markers”** in pzmap's import dialog, and look
+pzmap.org can handle more markers than my test computer. Also the cmd line limit on windows is limiting.
+Open one, choose **“Overwrite and add markers”** in pzmap's import dialog, and look
 around; then move on to the next batch.
 
 Nothing is uploaded anywhere. The markers are compressed into the URL itself
